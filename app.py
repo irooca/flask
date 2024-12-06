@@ -1,11 +1,6 @@
 from flask import Flask, render_template, request
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import GradientBoostingClassifier
-from xgboost import XGBClassifier
-from sklearn.neighbors import KNeighborsClassifier
 import joblib
+from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
@@ -19,15 +14,13 @@ models = {
 }
 
 # MLP 모델 로드
-from tensorflow.keras.models import load_model
 mlp_model = load_model('mlp_model.h5')
 
-def preprocess_input(data):
+def preprocess_input(age, fare, sex, pclass, family_size):
     # Family_Size에서 Is_Alone 계산
-    data['Is_Alone'] = (data['Family_Size'] == 1).astype(int)
-    # 필요한 피처만 반환
-    features = ['Age', 'Fare', 'Sex', 'Pclass', 'Family_Size', 'Is_Alone']
-    return data[features]
+    is_alone = 1 if family_size == 1 else 0
+    # 필요한 피처를 리스트로 반환
+    return [[age, fare, sex, pclass, family_size, is_alone]]
 
 # 홈 페이지
 @app.route('/')
@@ -44,17 +37,8 @@ def predict():
         pclass = int(request.form['pclass'])
         family_size = int(request.form['family_size'])
 
-        # 입력 데이터를 DataFrame으로 변환
-        input_data = pd.DataFrame([{
-            'Age': age,
-            'Fare': fare,
-            'Sex': sex,
-            'Pclass': pclass,
-            'Family_Size': family_size
-        }])
-
         # 전처리
-        processed_data = preprocess_input(input_data)
+        processed_data = preprocess_input(age, fare, sex, pclass, family_size)
 
         # 결과 저장
         predictions = []
@@ -83,8 +67,6 @@ def predict():
     except Exception as e:
         print(f"Error: {e}")
         return "An error occurred. Please check the server logs.", 500
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
