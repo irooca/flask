@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Results</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 60%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        a:hover {
+            background-color: #45a049;
+        }
+        #chart-container {
+            width: 60%; /* 테이블과 동일한 너비 */
+            margin: 20px auto;
+        }
+        #input-summary {
+            font-size: 1rem;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 60%; /* 테이블과 동일한 너비 */
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Survival Prediction Results</h1>
+
+    <!-- 입력값 표시 -->
+    <div id="input-summary">
+        <strong>Input Data:</strong>
+        Age: {{ input_data['Age'] }}, 
+        Fare: {{ input_data['Fare'] }}, 
+        Sex: {{ "Female" if input_data['Sex'] == 1 else "Male" }}, 
+        Pclass: {{ input_data['Pclass'] }}, 
+        Family Size: {{ input_data['Family_Size'] }}
+    </div>
+
+    <!-- 테이블로 결과 표시 -->
+    <table>
+        <tr>
+            <th>Model</th>
+            <th>Survival Probability (%)</th>
+        </tr>
+        {% for model, probability in predictions %}
+        <tr>
+            <td>{{ model }}</td>
+            <td>{{ probability }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 그래프 표시 -->
+    <div id="chart-container">
+        <canvas id="resultsChart"></canvas>
+    </div>
+
+    <!-- 다시 예측 버튼 -->
+    <a href="/">Predict Again</a>
+
+    <!-- Chart.js 스크립트 -->
+    <script>
+        const ctx = document.getElementById('resultsChart').getContext('2d');
+        const labels = {{ predictions | map(attribute=0) | list | tojson }};
+        const data = {{ predictions | map(attribute=1) | list | tojson }};
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Survival Probability (%)',
+                    data: data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

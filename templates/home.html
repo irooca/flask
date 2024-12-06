@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Titanic Survival Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        form {
+            margin: 20px auto;
+            width: 300px;
+            text-align: left;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .example-data {
+            margin-top: 30px;
+        }
+        ul {
+            text-align: left;
+            display: inline-block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Titanic Survival Prediction</h1>
+
+    <!-- 입력값 폼 -->
+    <form action="/predict" method="post">
+        <h2>Enter Passenger Information</h2>
+
+        <!-- 나이 입력 -->
+        <label for="age">Age (0.17 - 80):</label>
+        <input type="number" step="1" name="age" min="1" max="80" required>
+
+        <!-- 요금 입력 -->
+        <label for="fare">Fare (0 - 512.33):</label>
+        <input type="number" step="0.01" name="fare" min="0" max="512.33" required>
+
+        <!-- 성별 선택 -->
+        <label for="sex">Sex:</label>
+        <select name="sex" required>
+            <option value="0">Male</option>
+            <option value="1">Female</option>
+        </select>
+
+        <!-- 객실 등급 선택 -->
+        <label for="pclass">Passenger Class (1 = 1st, 2 = 2nd, 3 = 3rd):</label>
+        <select name="pclass" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+
+        <!-- 가족 크기 입력 -->
+        <label for="family_size">Family Size (1 - 11):</label>
+        <input type="number" name="family_size" min="1" max="11" required>
+
+        <!-- 제출 버튼 -->
+        <button type="submit">Predict</button>
+    </form>
+
+    <!-- 예시 데이터 -->
+    <div class="example-data">
+        <h2>Example Data</h2>
+        <p><strong>Rose DeWitt Bukater:</strong></p>
+        <ul>
+            <li>Age: 17</li>
+            <li>Fare: 100</li>
+            <li>Sex: Female</li>
+            <li>Passenger Class: 1</li>
+            <li>Family Size: 1</li>
+        </ul>
+        <p><strong>Jack Dawson:</strong></p>
+        <ul>
+            <li>Age: 20</li>
+            <li>Fare: 10</li>
+            <li>Sex: Male</li>
+            <li>Passenger Class: 3</li>
+            <li>Family Size: 1</li>
+        </ul>
+    </div>
+</body>
+</html>
