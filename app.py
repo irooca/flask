@@ -65,18 +65,24 @@ def predict_survival(data):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        # 사용자 입력 처리
+        # 사용자 입력 데이터 처리
         data = {
             "Age": request.form.get("Age"),
             "Fare": request.form.get("Fare"),
             "Sex": request.form.get("Sex"),
             "Pclass": request.form.get("Pclass"),
             "Family_Size": request.form.get("Family_Size"),
-            "Is_Alone": request.form.get("Is_Alone")
         }
-        predictions = predict_survival(data)
+
+        # Is_Alone 계산
+        data["Is_Alone"] = 1 if int(data["Family_Size"]) == 1 else 0
+
+        # 예측 실행 (생략)
+        predictions = predict_survival(data)  # 함수는 기존 코드 활용
         return render_template("index.html", predictions=predictions, data=data)
+
     return render_template("index.html", predictions=None)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
