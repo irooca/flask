@@ -22,10 +22,10 @@ def preprocess_input(data):
     processed_data = np.array([
         float(data['Age']),
         float(data['Fare']),
-        1 if data['Sex'] == 'male' else 0,
+        0 if data['Sex'] == 'male' else 1,
         int(data['Pclass']),
         int(data['Family_Size']),
-        int(data['Is_Alone'])
+        int(data['Alone'])
     ]).reshape(1, -1)
     return scaler.transform(processed_data)
 
