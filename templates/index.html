@@ -9,16 +9,49 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        form {
+            display: inline-block;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        label, input, select {
+            display: block;
+            margin-bottom: 10px;
+            width: 300px; /* 입력창 가로 길이 통일 */
+        }
+        input, select {
+            padding: 8px;
+            text-align: left; /* 텍스트 왼쪽 정렬 */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
         table {
-            margin: 20px auto;
             border-collapse: collapse;
-            width: 80%;
+            margin: 20px auto;
+            width: 60%;
         }
         th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
+            border: 1px solid #ddd;
+            padding: 8px;
             text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
         }
         canvas {
             margin: 20px auto;
@@ -31,26 +64,26 @@
     <!-- 입력 폼 -->
     <form method="POST">
         <label for="Age">Age:</label>
-        <input type="number" name="Age" step="0.1" required><br><br>
+        <input type="number" name="Age" step="0.1" required>
 
         <label for="Fare">Fare:</label>
-        <input type="number" name="Fare" step="0.01" required><br><br>
+        <input type="number" name="Fare" step="0.01" required>
 
         <label for="Sex">Sex:</label>
         <select name="Sex">
             <option value="male">Male</option>
             <option value="female">Female</option>
-        </select><br><br>
+        </select>
 
         <label for="Pclass">Passenger Class:</label>
         <select name="Pclass">
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
-        </select><br><br>
+        </select>
 
         <label for="Family_Size">Family Size:</label>
-        <input type="number" name="Family_Size" required><br><br>
+        <input type="number" name="Family_Size" required>
 
         <button type="submit">Predict Survival</button>
     </form>
@@ -88,7 +121,7 @@
 
     <!-- 그래프 -->
     <h2>Model-wise Survival Probabilities</h2>
-    <canvas id="predictionChart" style="width: 80%; height: 300px;"></canvas>
+    <canvas id="predictionChart" style="width: 60%; height: 300px;"></canvas>
     <script>
         const ctx = document.getElementById('predictionChart').getContext('2d');
         const chart = new Chart(ctx, {
