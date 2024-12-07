@@ -1,72 +1,82 @@
 from flask import Flask, render_template, request
-import joblib
+import pickle
 from tensorflow.keras.models import load_model
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+from xgboost import XGBClassifier
 
 app = Flask(__name__)
 
 # 모델 로드
-models = {
-    "Logistic Regression": joblib.load('logistic_model.pkl'),
-    "Random Forest": joblib.load('random_forest_model.pkl'),
-    "Gradient Boosting": joblib.load('gradient_boosting_model.pkl'),
-    "XGBoost": joblib.load('xgboost_model.pkl'),
-    "KNN": joblib.load('knn_model.pkl')
-}
-
-# MLP 모델 로드
+rf_model = pickle.load(open('rf_model.pkl', 'rb'))
+xgb_model = XGBClassifier()
+xgb_model.load_model('xgb_model.json')
 mlp_model = load_model('mlp_model.h5')
+mlp_model_1 = load_model('mlp_model_1.h5')  # 앙상블 모델 1
+mlp_model_2 = load_model('mlp_model_2.h5')  # 앙상블 모델 2
+scaler = pickle.load(open('scaler.pkl', 'rb'))  # 스케일러 저장 필요
 
-def preprocess_input(age, fare, sex, pclass, family_size):
-    # Family_Size에서 Is_Alone 계산
-    is_alone = 1 if family_size == 1 else 0
-    # 필요한 피처를 리스트로 반환
-    return [[age, fare, sex, pclass, family_size, is_alone]]
+# 특성 처리 함수
+def preprocess_input(data):
+    # data: 입력된 사용자 값 (dict 형태)
+    processed_data = np.array([
+        float(data['Age']),
+        float(data['Fare']),
+        1 if data['Sex'] == 'male' else 0,
+        int(data['Pclass']),
+        int(data['Family_Size']),
+        int(data['Is_Alone'])
+    ]).reshape(1, -1)
+    return scaler.transform(processed_data)
 
-# 홈 페이지
-@app.route('/')
-def home():
-    return render_template('home.html')
+# 앙상블 MLP 생존 확률 계산 함수
+def ensemble_mlp_predict(models, processed_data, weights):
+    predictions = [model.predict(processed_data)[0][0] for model in models]
+    weighted_prediction = sum(w * p for w, p in zip(weights, predictions))
+    return weighted_prediction
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        # 입력값 받기
-        age = float(request.form['age'])
-        fare = float(request.form['fare'])
-        sex = int(request.form['sex'])  # 0=Male, 1=Female
-        pclass = int(request.form['pclass'])
-        family_size = int(request.form['family_size'])
+# 생존 확률 계산 함수
+def predict_survival(data):
+    processed_data = preprocess_input(data)
 
-        # 전처리
-        processed_data = preprocess_input(age, fare, sex, pclass, family_size)
+    # 각 모델 예측
+    rf_prob = rf_model.predict_proba(processed_data)[0][1]
+    xgb_prob = xgb_model.predict_proba(processed_data)[0][1]
+    mlp_prob = mlp_model.predict(processed_data)[0][0]
 
-        # 결과 저장
-        predictions = []
+    # 앙상블 MLP 예측
+    ensemble_prob = ensemble_mlp_predict(
+        [mlp_model_1, mlp_model_2],
+        processed_data,
+        weights=[0.5, 0.5]
+    )
 
-        # 머신러닝 모델 예측
-        for model_name, model in models.items():
-            prob = model.predict_proba(processed_data)[:, 1][0]
-            predictions.append((model_name, round(prob * 100, 2)))
+    # 평균 생존 확률 계산
+    avg_prob = (rf_prob + xgb_prob + mlp_prob + ensemble_prob) / 4
+    return {
+        "Random Forest": rf_prob,
+        "XGBoost": xgb_prob,
+        "MLP": mlp_prob,
+        "Ensemble MLP": ensemble_prob,
+        "Average Probability": avg_prob
+    }
 
-        # 딥러닝 모델 예측
-        mlp_prob = mlp_model.predict(processed_data)[0][0]
-        predictions.append(("MLP (Deep Learning)", round(mlp_prob * 100, 2)))
+# 웹 인터페이스
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        # 사용자 입력 처리
+        data = {
+            "Age": request.form.get("Age"),
+            "Fare": request.form.get("Fare"),
+            "Sex": request.form.get("Sex"),
+            "Pclass": request.form.get("Pclass"),
+            "Family_Size": request.form.get("Family_Size"),
+            "Is_Alone": request.form.get("Is_Alone")
+        }
+        predictions = predict_survival(data)
+        return render_template("index.html", predictions=predictions, data=data)
+    return render_template("index.html", predictions=None)
 
-        # 결과 반환
-        return render_template(
-            'result.html', 
-            predictions=predictions, 
-            input_data={
-                'Age': age,
-                'Fare': fare,
-                'Sex': sex,
-                'Pclass': pclass,
-                'Family_Size': family_size
-            }
-        )
-    except Exception as e:
-        print(f"Error: {e}")
-        return "An error occurred. Please check the server logs.", 500
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
