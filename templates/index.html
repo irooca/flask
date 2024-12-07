@@ -11,17 +11,10 @@
             margin: 0;
             padding: 20px;
         }
-        #container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 20px;
-        }
         #form-container {
             text-align: left;
-            width: 300px;
-            flex-shrink: 0;
+            max-width: 500px;
+            margin: 0 auto;
         }
         label {
             margin-bottom: 5px;
@@ -31,7 +24,8 @@
             display: block;
             margin-bottom: 15px;
             padding: 8px;
-            width: 100%;
+            width: 100%; /* 동일한 가로 길이 설정 */
+            box-sizing: border-box; /* 패딩 포함 크기 계산 */
             border: 1px solid #ccc;
             border-radius: 4px;
         }
@@ -52,15 +46,14 @@
             background-color: #0056b3;
         }
         #results-container {
-            flex-grow: 1;
+            margin-top: 30px;
             text-align: center;
-            max-width: 800px;
         }
         table {
             border-collapse: collapse;
             margin: 20px auto;
             width: 100%;
-            max-width: 100%;
+            max-width: 600px;
         }
         th, td {
             border: 1px solid #ddd;
@@ -72,99 +65,114 @@
         }
         canvas {
             margin-top: 20px;
-            max-width: 100%; /* 반응형 그래프 */
+            max-width: 600px;
             height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        #input-summary {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #333;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <h1 style="text-align: center;">Titanic Survival Prediction</h1>
-    <div id="container">
-        <!-- 입력 폼 -->
-        <div id="form-container">
-            <form method="POST">
-                <label for="Age">Age:</label>
-                <input type="number" name="Age" step="0.01" min="0.17" max="80.0" placeholder="Enter age (0.17 - 80.0)" required>
 
-                <label for="Fare">Fare:</label>
-                <input type="number" name="Fare" step="0.01" min="0.0" max="512.33" placeholder="Enter fare (0.0 - 512.33)" required>
+    <!-- 입력 폼 -->
+    <div id="form-container">
+        <form method="POST">
+            <label for="Age">Age:</label>
+            <input type="number" name="Age" step="0.01" min="0.17" max="80.0" placeholder="Enter age (0.17 - 80.0)" required>
 
-                <label for="Sex">Sex:</label>
-                <select name="Sex">
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                </select>
+            <label for="Fare">Fare:</label>
+            <input type="number" name="Fare" step="0.01" min="0.0" max="512.33" placeholder="Enter fare (0.0 - 512.33)" required>
 
-                <label for="Pclass">Passenger Class:</label>
-                <select name="Pclass">
-                    <option value="1">1 (First Class)</option>
-                    <option value="2">2 (Second Class)</option>
-                    <option value="3">3 (Third Class)</option>
-                </select>
+            <label for="Sex">Sex:</label>
+            <select name="Sex">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
 
-                <label for="Family_Size">Family Size:</label>
-                <input type="number" name="Family_Size" min="1" max="11" placeholder="Enter family size (1 - 11)" required>
+            <label for="Pclass">Passenger Class:</label>
+            <select name="Pclass">
+                <option value="1">1 (First Class)</option>
+                <option value="2">2 (Second Class)</option>
+                <option value="3">3 (Third Class)</option>
+            </select>
 
-                <button type="submit">Predict Survival</button>
-            </form>
+            <label for="Family_Size">Family Size:</label>
+            <input type="number" name="Family_Size" min="1" max="11" placeholder="Enter family size (1 - 11)" required>
+
+            <button type="submit">Predict Survival</button>
+        </form>
+
+        <!-- 입력값 요약 -->
+        {% if data %}
+        <div id="input-summary">
+            <strong>Input Data:</strong> Age: {{ data['Age'] }}, Fare: {{ data['Fare'] }}, 
+            Sex: {{ data['Sex'] }}, Class: {{ data['Pclass'] }}, Family Size: {{ data['Family_Size'] }}
         </div>
+        {% endif %}
+    </div>
 
-        <!-- 결과 컨테이너 -->
-        <div id="results-container">
-            {% if predictions %}
-            <h2>Prediction Results</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Model</th>
-                        <th>Survival Probability</th>
-                        <th>Result</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for model, prob in predictions.items() %}
-                    {% if model != 'Average Probability' %}
-                    <tr>
-                        <td>{{ model }}</td>
-                        <td>{{ prob | round(2) }}</td>
-                        <td>{% if prob > 0.5 %}Survive{% else %}Not Survive{% endif %}</td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
-            <h3>Average Probability: {{ predictions['Average Probability'] | round(2) }}</h3>
-            <canvas id="predictionChart"></canvas>
-            <script>
-                const ctx = document.getElementById('predictionChart').getContext('2d');
-                const chart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: [{% for model in predictions.keys() if model != 'Average Probability' %}'{{ model }}',{% endfor %}],
-                        datasets: [{
-                            label: 'Survival Probability',
-                            data: [{% for prob in predictions.values() if prob != predictions['Average Probability'] %}{{ prob | round(2) }},{% endfor %}],
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 1
-                            }
+    <!-- 결과 컨테이너 -->
+    <div id="results-container">
+        {% if predictions %}
+        <h2>Prediction Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>Survival Probability</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model, prob in predictions.items() %}
+                {% if model != 'Average Probability' %}
+                <tr>
+                    <td>{{ model }}</td>
+                    <td>{{ prob | round(2) }}</td>
+                    <td>{% if prob > 0.5 %}Survive{% else %}Not Survive{% endif %}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>Average Probability: {{ predictions['Average Probability'] | round(2) }}</h3>
+        <canvas id="predictionChart"></canvas>
+        <script>
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [{% for model in predictions.keys() if model != 'Average Probability' %}'{{ model }}',{% endfor %}],
+                    datasets: [{
+                        label: 'Survival Probability',
+                        data: [{% for prob in predictions.values() if prob != predictions['Average Probability'] %}{{ prob | round(2) }},{% endfor %}],
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1
                         }
                     }
-                });
-            </script>
-            {% else %}
-            <h2>Prediction Results</h2>
-            <p>No predictions yet. Results will appear here after submission.</p>
-            {% endif %}
-        </div>
+                }
+            });
+        </script>
+        {% else %}
+        <h2>Prediction Results</h2>
+        <p>No predictions yet. Results will appear here after submission.</p>
+        {% endif %}
     </div>
 </body>
 </html>
