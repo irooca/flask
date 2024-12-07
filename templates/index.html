@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Titanic Survival Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>Titanic Survival Prediction</h1>
+    
+    <!-- 입력 폼 -->
     <form method="POST">
         <label for="Age">Age:</label>
         <input type="number" name="Age" step="0.1" required><br>
@@ -39,15 +42,64 @@
         <button type="submit">Predict Survival</button>
     </form>
 
+    <!-- 사용자 입력값 표시 -->
+    {% if data %}
+    <h3>Input Values:</h3>
+    <p>Age: {{ data['Age'] }}, Fare: {{ data['Fare'] }}, Sex: {{ data['Sex'] }}, 
+    Pclass: {{ data['Pclass'] }}, Family Size: {{ data['Family_Size'] }}, Is Alone: {{ data['Is_Alone'] }}</p>
+    {% endif %}
+
+    <!-- 생존 확률 및 결과 -->
     {% if predictions %}
     <h2>Prediction Results</h2>
-    <ul>
-        <li>Random Forest: {{ predictions['Random Forest'] | round(2) }}</li>
-        <li>XGBoost: {{ predictions['XGBoost'] | round(2) }}</li>
-        <li>MLP: {{ predictions['MLP'] | round(2) }}</li>
-        <li>Ensemble MLP: {{ predictions['Ensemble MLP'] | round(2) }}</li>
-        <li><strong>Average Survival Probability: {{ predictions['Average Probability'] | round(2) }}</strong></li>
-    </ul>
+    <table border="1" style="width: 100%; text-align: center;">
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>Survival Probability</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for model, prob in predictions.items() %}
+            {% if model != 'Average Probability' %}
+            <tr>
+                <td>{{ model }}</td>
+                <td>{{ prob | round(2) }}</td>
+                <td>{% if prob > 0.5 %}Survive{% else %}Not Survive{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 그래프 -->
+    <h2>Model-wise Survival Probabilities</h2>
+    <canvas id="predictionChart" style="width: 100%; height: 300px;"></canvas>
+    <script>
+        const ctx = document.getElementById('predictionChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [{% for model in predictions.keys() if model != 'Average Probability' %}'{{ model }}',{% endfor %}],
+                datasets: [{
+                    label: 'Survival Probability',
+                    data: [{% for prob in predictions.values() if prob != predictions['Average Probability'] %}{{ prob | round(2) }},{% endfor %}],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1
+                    }
+                }
+            }
+        });
+    </script>
     {% endif %}
 </body>
 </html>
