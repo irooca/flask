@@ -8,23 +8,26 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
             margin: 0;
-            padding: 0;
+            padding: 20px;
         }
-        form {
-            display: inline-block;
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        #form-container {
             text-align: left;
-            margin-bottom: 20px;
+            width: 300px;
         }
         label, input, select {
             display: block;
             margin-bottom: 10px;
-            width: 300px; /* 입력창 가로 길이 통일 */
         }
         input, select {
-            padding: 8px;
-            text-align: left; /* 텍스트 왼쪽 정렬 */
+            padding: 6px;
+            width: 100%;
+            text-align: left;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
@@ -40,10 +43,15 @@
         button:hover {
             background-color: #0056b3;
         }
+        #results-container {
+            margin-left: 40px;
+            width: 500px;
+            text-align: center;
+        }
         table {
             border-collapse: collapse;
             margin: 20px auto;
-            width: 60%;
+            width: 100%;
         }
         th, td {
             border: 1px solid #ddd;
@@ -54,98 +62,97 @@
             background-color: #f4f4f4;
         }
         canvas {
-            margin: 20px auto;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Titanic Survival Prediction</h1>
-    
-    <!-- 입력 폼 -->
-    <form method="POST">
-        <label for="Age">Age:</label>
-        <input type="number" name="Age" step="0.1" required>
+    <h1 style="text-align: center;">Titanic Survival Prediction</h1>
+    <div id="container">
+        <!-- 입력 폼 -->
+        <div id="form-container">
+            <form method="POST">
+                <label for="Age">Age (0.17 - 80.0):</label>
+                <input type="number" name="Age" step="0.1" min="0.17" max="80.0" required>
 
-        <label for="Fare">Fare:</label>
-        <input type="number" name="Fare" step="0.01" required>
+                <label for="Fare">Fare (0.0 - 512.33):</label>
+                <input type="number" name="Fare" step="0.01" min="0.0" max="512.33" required>
 
-        <label for="Sex">Sex:</label>
-        <select name="Sex">
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-        </select>
+                <label for="Sex">Sex:</label>
+                <select name="Sex">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
 
-        <label for="Pclass">Passenger Class:</label>
-        <select name="Pclass">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-        </select>
+                <label for="Pclass">Passenger Class (1, 2, 3):</label>
+                <select name="Pclass">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
 
-        <label for="Family_Size">Family Size:</label>
-        <input type="number" name="Family_Size" required>
+                <label for="Family_Size">Family Size (1 - 11):</label>
+                <input type="number" name="Family_Size" min="1" max="11" required>
 
-        <button type="submit">Predict Survival</button>
-    </form>
+                <button type="submit">Predict Survival</button>
+            </form>
+        </div>
 
-    <!-- 사용자 입력값 표시 -->
-    {% if data %}
-    <h3>Input Values:</h3>
-    <p>Age: {{ data['Age'] }}, Fare: {{ data['Fare'] }}, Sex: {{ data['Sex'] }}, 
-    Pclass: {{ data['Pclass'] }}, Family Size: {{ data['Family_Size'] }}</p>
-    {% endif %}
-
-    <!-- 생존 확률 및 결과 -->
-    {% if predictions %}
-    <h2>Prediction Results</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Model</th>
-                <th>Survival Probability</th>
-                <th>Result</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for model, prob in predictions.items() %}
-            {% if model != 'Average Probability' %}
-            <tr>
-                <td>{{ model }}</td>
-                <td>{{ prob | round(2) }}</td>
-                <td>{% if prob > 0.5 %}Survive{% else %}Not Survive{% endif %}</td>
-            </tr>
-            {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- 그래프 -->
-    <h2>Model-wise Survival Probabilities</h2>
-    <canvas id="predictionChart" style="width: 60%; height: 300px;"></canvas>
-    <script>
-        const ctx = document.getElementById('predictionChart').getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [{% for model in predictions.keys() if model != 'Average Probability' %}'{{ model }}',{% endfor %}],
-                datasets: [{
-                    label: 'Survival Probability',
-                    data: [{% for prob in predictions.values() if prob != predictions['Average Probability'] %}{{ prob | round(2) }},{% endfor %}],
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 1
+        <!-- 결과 컨테이너 -->
+        <div id="results-container">
+            {% if predictions %}
+            <h2>Prediction Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Survival Probability</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for model, prob in predictions.items() %}
+                    {% if model != 'Average Probability' %}
+                    <tr>
+                        <td>{{ model }}</td>
+                        <td>{{ prob | round(2) }}</td>
+                        <td>{% if prob > 0.5 %}Survive{% else %}Not Survive{% endif %}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h3>Average Probability: {{ predictions['Average Probability'] | round(2) }}</h3>
+            <canvas id="predictionChart"></canvas>
+            <script>
+                const ctx = document.getElementById('predictionChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [{% for model in predictions.keys() if model != 'Average Probability' %}'{{ model }}',{% endfor %}],
+                        datasets: [{
+                            label: 'Survival Probability',
+                            data: [{% for prob in predictions.values() if prob != predictions['Average Probability'] %}{{ prob | round(2) }},{% endfor %}],
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 1
+                            }
+                        }
                     }
-                }
-            }
-        });
-    </script>
-    {% endif %}
+                });
+            </script>
+            {% else %}
+            <h2>Prediction Results</h2>
+            <p>No predictions yet. Results will appear here after submission.</p>
+            {% endif %}
+        </div>
+    </div>
 </body>
 </html>
